@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Response Tracking — Capture & Reports</title>
+  <title>Local Home Jobs | Lead Tracking</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     input[type="date"], input[type="tel"], input[type="email"], input[type="text"] { appearance: none; }
@@ -13,7 +13,7 @@
 <body class="min-h-screen bg-gray-50">
   <main class="max-w-5xl mx-auto p-6">
     <header class="mb-6">
-      <h1 class="text-3xl font-bold tracking-tight">Response Tracking</h1>
+      <h1 class="text-3xl font-bold tracking-tight">Local Home Jobs | Lead Tracking</h1>
     </header>
 
     <!-- Mini login -->
@@ -66,7 +66,7 @@
               <label class="block text-sm font-medium mb-1" for="phone">Phone</label>
               <input id="phone" name="phone" type="tel" inputmode="numeric" maxlength="16" required placeholder="(333) 123-4567"
                      class="w-full rounded-xl border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-              <p class="text-xs text-gray-500 mt-1">Auto‑format: (###) ###-#### — paste like <code>(386) 627-6554</code>.</p>
+              <p class="text-xs text-gray-500 mt-1">Auto-format: (###) ###-#### — paste like <code>(386) 627-6554</code>.</p>
               <p id="phoneErr" class="text-xs text-red-600 mt-1 hidden">Enter at least 10 digits.</p>
             </div>
             <div>
@@ -129,6 +129,7 @@
           <div class="flex items-center justify-end gap-3 pt-2">
             <button id="resetBtn" type="button" class="px-4 py-2 rounded-xl border border-gray-300">Clear</button>
             <button id="submitBtn" type="button" class="px-4 py-2 rounded-xl bg-indigo-600 text-white">Save</button>
+            <button id="logoutBtn" type="button" class="px-4 py-2 rounded-xl border border-red-300 text-red-600">Log out</button>
           </div>
         </form>
         <div id="toast" class="hidden mt-4 rounded-xl border p-3 text-sm"></div>
@@ -294,12 +295,17 @@
       else { toast.classList.add('border-gray-300', 'text-gray-800'); }
     }
 
-    // Reset
+    // Reset — mantiene el email logueado
     document.getElementById('resetBtn').addEventListener('click', () => {
       document.getElementById('leadForm').reset();
       callbackWrap.classList.add('hidden');
       bookedExtras.classList.add('hidden');
       phoneErr.classList.add('hidden');
+      // mantener email de sesión
+      if (currentUserEmail) {
+        document.getElementById('submitter_email').value = currentUserEmail;
+        document.getElementById('q_email').value = currentUserEmail;
+      }
       showToast('Form cleared.', 'info');
     });
 
@@ -338,10 +344,16 @@
         const txt = await res.text();
         let data; try { data = JSON.parse(txt); } catch { throw new Error('Bad JSON from backend: ' + txt); }
         if (!data.success) throw new Error(data.message || 'Save error');
+
+        // reset visual, pero conservar el email logueado
         document.getElementById('leadForm').reset();
         callbackWrap.classList.add('hidden');
         bookedExtras.classList.add('hidden');
         phoneErr.classList.add('hidden');
+        if (currentUserEmail) {
+          document.getElementById('submitter_email').value = currentUserEmail;
+          document.getElementById('q_email').value = currentUserEmail;
+        }
         showToast('Saved ✔️', 'success');
       } catch (err) {
         showToast('Save failed: ' + err.message, 'error');
@@ -458,6 +470,24 @@
     function escapeHtml(s) {
       return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
     }
+
+    // === Logout ===
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      currentUserEmail = '';
+      document.getElementById('leadForm').reset();
+      callbackWrap.classList.add('hidden');
+      bookedExtras.classList.add('hidden');
+      phoneErr.classList.add('hidden');
+      document.getElementById('tabsWrap').classList.add('hidden');
+      document.getElementById('sectionLogin').classList.remove('hidden');
+      document.getElementById('loginEmail').value = '';
+      document.getElementById('submitter_email').value = '';
+      document.getElementById('q_email').value = '';
+      document.getElementById('resultsBody').innerHTML = '';
+      document.getElementById('resultsCount').textContent = '—';
+      document.getElementById('q_emails').innerHTML = '';
+      showToast('Logged out.', 'info');
+    });
   </script>
 </body>
 </html>
