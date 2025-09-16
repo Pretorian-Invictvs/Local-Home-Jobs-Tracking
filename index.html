@@ -16,7 +16,7 @@
       <h1 class="text-3xl font-bold tracking-tight">Local Home Jobs | Lead Tracking</h1>
     </header>
 
-    <!-- Mini login -->
+    <!-- Login -->
     <section id="sectionLogin" class="bg-white rounded-2xl shadow p-6 mb-6">
       <h2 class="text-xl font-semibold mb-4">Login</h2>
       <p class="text-sm text-gray-600 mb-3">Enter your email to continue:</p>
@@ -27,14 +27,13 @@
       <p id="loginMsg" class="text-xs text-red-600 mt-2 hidden">Invalid email</p>
     </section>
 
-    <!-- Tabs -->
     <div id="tabsWrap" class="hidden">
       <div class="flex gap-2 mb-4">
         <button id="tabCapture" class="px-4 py-2 rounded-xl border border-indigo-200 bg-white">Capture</button>
         <button id="tabReports" class="px-4 py-2 rounded-xl border border-indigo-200 bg-white">Reports</button>
       </div>
 
-      <!-- Section: Capture -->
+      <!-- Capture -->
       <section id="sectionCapture" class="bg-white rounded-2xl shadow p-6">
         <form id="leadForm" class="grid grid-cols-1 gap-4" novalidate>
           <div class="flex items-center justify-between">
@@ -89,7 +88,6 @@
             <p class="text-xs text-gray-500 mt-1">Required only if you select "Call Back".</p>
           </div>
 
-          <!-- Booked extras -->
           <div id="booked_extras" class="hidden border rounded-xl p-4 bg-indigo-50/30">
             <div class="grid md:grid-cols-2 gap-4">
               <div>
@@ -146,14 +144,14 @@
         <div id="toast" class="hidden mt-4 rounded-xl border p-3 text-sm"></div>
       </section>
 
-      <!-- Section: Reports -->
+      <!-- Reports -->
       <section id="sectionReports" class="bg-white rounded-2xl shadow p-6 mt-6 hidden">
         <h2 class="text-xl font-semibold mb-4">Reports</h2>
         <div class="grid md:grid-cols-5 gap-4 mb-4 items-end">
           <input id="q_email" type="email" class="hidden" readonly />
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium mb-1" for="q_emails">Emails</label>
-            <select id="q_emails" multiple class="w-full rounded-xl border border-gray-300 px-3 py-2 bg-white"></select>
+            <label class="block text-sm font-medium mb-1" for="q_actors">Submitters (emails + legacy names)</label>
+            <select id="q_actors" multiple class="w-full rounded-xl border border-gray-300 px-3 py-2 bg-white"></select>
             <label class="inline-flex items-center gap-2 text-sm mt-2">
               <input id="q_select_all" type="checkbox" class="rounded" /> Select all
             </label>
@@ -183,7 +181,7 @@
             <thead>
               <tr class="text-left border-b bg-gray-50">
                 <th class="py-2 pr-4">Date</th>
-                <th class="py-2 pr-4">Email</th>
+                <th class="py-2 pr-4">Email / Name</th>
                 <th class="py-2 pr-4">Client</th>
                 <th class="py-2 pr-4">Company</th>
                 <th class="py-2 pr-4">Phone</th>
@@ -209,13 +207,10 @@
     // === Config ===
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzflGfquQ0T2sTHdmTnKOwpAClwKfc_hi9XtBH3dbIPqieuVZpKPE3HIIBlfXGB85fJ/exec";
     const API_KEY = "X9fj_82kjhPpLz!2025$Secure";
-
-    // Editable list of closers
     const CLOSERS = ['Ryan Irvine','Jacob Donaldson','Anders Dahl','Marcos Flores','James McNamara','Oswaldo Hill'];
-
     let currentUserEmail = '';
 
-    // === Login ===
+    // Login
     document.getElementById('btnLogin').addEventListener('click', () => {
       const email = document.getElementById('loginEmail').value.trim();
       if (!email || !(email.includes('@') && email.includes('.'))) {
@@ -225,10 +220,10 @@
       document.getElementById('loginMsg').classList.add('hidden');
       currentUserEmail = email;
       document.getElementById('submitter_email').value = email;
-      document.getElementById('q_email').value = email; // auth for backend
+      document.getElementById('q_email').value = email;
       document.getElementById('sectionLogin').classList.add('hidden');
       document.getElementById('tabsWrap').classList.remove('hidden');
-      loadEmailsList();
+      loadActorsList();
     });
 
     // Tabs
@@ -243,29 +238,24 @@
       inactive.classList.remove('bg-indigo-600','text-white');
       sectionCapture.classList.toggle('hidden', which !== 'capture');
       sectionReports.classList.toggle('hidden', which !== 'reports');
-      if (which === 'reports') loadEmailsList();
+      if (which === 'reports') loadActorsList();
     }
     tabCapture.addEventListener('click', () => setTab('capture'));
     tabReports.addEventListener('click', () => setTab('reports'));
     setTab('capture');
 
-    // Date tag (today)
+    // Today tag
     document.getElementById('todayTag').textContent =
       new Date().toLocaleDateString('en-US', { year:'numeric', month:'2-digit', day:'2-digit' });
 
-    // Response toggles
+    // Response toggles + closers
     const responseSelect = document.getElementById('response_type');
     const callbackWrap = document.getElementById('callback_wrap');
     const callbackInput = document.getElementById('callback_date');
     const bookedExtras = document.getElementById('booked_extras');
     const closerSelect = document.getElementById('closer');
     const dateOfBooking = document.getElementById('date_of_booking');
-
-    function renderClosers() {
-      closerSelect.innerHTML = '<option value="">Select…</option>' + CLOSERS.map(n => `<option>${n}</option>`).join('');
-    }
-    renderClosers();
-
+    closerSelect.innerHTML = '<option value="">Select…</option>' + CLOSERS.map(n => `<option>${n}</option>`).join('');
     responseSelect.addEventListener('change', () => {
       const v = responseSelect.value;
       const isCallback = v === 'Call Back';
@@ -276,7 +266,7 @@
       if (!isCallback) callbackInput.value = '';
     });
 
-    // Phone mask (digits only → display as (###) ###-####)
+    // Phone mask
     const phoneInput = document.getElementById('phone');
     const phoneErr   = document.getElementById('phoneErr');
     function formatUS(digits) {
@@ -295,19 +285,12 @@
       phoneErr.classList.toggle('hidden', digits.length >= 10);
     });
 
-    // Sub account: only 1–999
+    // Sub account validation
     const subAcc = document.getElementById('sub_account');
     const subAccErr = document.getElementById('subAccErr');
     subAcc.addEventListener('input', () => {
-      // dejar solo dígitos y máximo 3 chars
       const digits = (subAcc.value.match(/[0-9]/g) || []).join('').slice(0,3);
       subAcc.value = digits;
-      const n = digits ? parseInt(digits,10) : NaN;
-      const ok = !digits || (n>=1 && n<=999);
-      subAccErr.classList.toggle('hidden', ok);
-    });
-    subAcc.addEventListener('blur', () => {
-      const digits = subAcc.value.trim();
       const n = digits ? parseInt(digits,10) : NaN;
       const ok = !digits || (n>=1 && n<=999);
       subAccErr.classList.toggle('hidden', ok);
@@ -324,7 +307,7 @@
       else { toast.classList.add('border-gray-300', 'text-gray-800'); }
     }
 
-    // Reset (mantiene email)
+    // Reset (mantiene email logueado)
     document.getElementById('resetBtn').addEventListener('click', () => {
       document.getElementById('leadForm').reset();
       callbackWrap.classList.add('hidden');
@@ -338,20 +321,20 @@
       showToast('Form cleared.', 'info');
     });
 
-    // Save (POST) — x-www-form-urlencoded
+    // Save
     document.getElementById('submitBtn').addEventListener('click', async () => {
       const email = document.getElementById('submitter_email').value.trim();
       const digitsOnlyPhone = (phoneInput.value.match(/[0-9]/g) || []).join('');
       const resp  = responseSelect.value;
       const okEmail = email.includes('@') && email.includes('.');
-      const subVal = subAcc.value.trim();
+      const subVal = (document.getElementById('sub_account').value || '').trim();
       const subOk = !subVal || (/^\d{1,3}$/.test(subVal) && parseInt(subVal,10)>=1 && parseInt(subVal,10)<=999);
 
       if (!okEmail) return showToast('Enter a valid email.', 'error');
       if (!document.getElementById('client_name').value.trim()) return showToast('Client name is required.', 'error');
       if (digitsOnlyPhone.length < 10) return showToast('Phone must have at least 10 digits.', 'error');
       if (!resp) return showToast('Select a response type.', 'error');
-      if (resp === 'Call Back' && !callbackInput.value) return showToast('Select a Call Back date.', 'error');
+      if (resp === 'Call Back' && !document.getElementById('callback_date').value) return showToast('Select a Call Back date.', 'error');
       if (!subOk) return showToast('Sub account must be 1–999.', 'error');
 
       try {
@@ -362,9 +345,9 @@
           company_name: document.getElementById('company_name').value.trim(),
           phone: digitsOnlyPhone,
           response_type: resp,
-          callback_date: callbackInput.value || '',
-          closer: (resp === 'Booked' ? (closerSelect.value || '') : ''),
-          date_of_booking: (resp === 'Booked' ? (dateOfBooking.value || '') : ''),
+          callback_date: document.getElementById('callback_date').value || '',
+          closer: (resp === 'Booked' ? (document.getElementById('closer').value || '') : ''),
+          date_of_booking: (resp === 'Booked' ? (document.getElementById('date_of_booking').value || '') : ''),
           sub_account: subVal || '',
           source: document.getElementById('source').value.trim(),
           notes: document.getElementById('notes').value.trim(),
@@ -379,7 +362,6 @@
         let data; try { data = JSON.parse(txt); } catch { throw new Error('Bad JSON from backend: ' + txt); }
         if (!data.success) throw new Error(data.message || 'Save error');
 
-        // reset visual, pero conservar email
         document.getElementById('leadForm').reset();
         callbackWrap.classList.add('hidden');
         bookedExtras.classList.add('hidden');
@@ -396,57 +378,61 @@
       }
     });
 
-    // Reports (GET)
-    const btnQuery = document.getElementById('btnQuery');
-    const btnExport = document.getElementById('btnExport');
-    const resultsBody = document.getElementById('resultsBody');
-    const resultsCount = document.getElementById('resultsCount');
-    const qEmails = document.getElementById('q_emails');
+    // === Reports ===
+    const qActors = document.getElementById('q_actors');
     const qSelectAll = document.getElementById('q_select_all');
-
     function optionsSelected(selectEl) {
       return Array.from(selectEl.options).filter(o => o.selected).map(o => o.value);
     }
-
     qSelectAll.addEventListener('change', () => {
       const all = qSelectAll.checked;
-      Array.from(qEmails.options).forEach(o => o.selected = all);
+      Array.from(qActors.options).forEach(o => o.selected = all);
     });
 
-    async function loadEmailsList() {
+    async function loadActorsList() {
       if (!currentUserEmail) return;
       try {
         const url = new URL(WEB_APP_URL);
         url.searchParams.set('api_key', API_KEY);
         url.searchParams.set('email', currentUserEmail); // auth
-        url.searchParams.set('list', 'emails');
+        url.searchParams.set('list', 'actors');
         const res = await fetch(url.toString());
         const data = await res.json();
-        if (!data.success) throw new Error(data.message || 'Failed to load emails');
+        if (!data.success) throw new Error(data.message || 'Failed to load actors');
         const emails = (data.emails || []).sort((a,b)=>a.localeCompare(b));
-        const prev = new Set(optionsSelected(qEmails));
-        qEmails.innerHTML = emails.map(e => `<option value="${e}">${e}</option>`).join('');
-        Array.from(qEmails.options).forEach(o => { if (prev.has(o.value)) o.selected = true; });
+        const names  = (data.names  || []).sort((a,b)=>a.localeCompare(b));
+
+        // mantener selección previa
+        const prev = new Set(optionsSelected(qActors));
+        let html = '';
+        if (emails.length) {
+          html += `<optgroup label="Emails">` + emails.map(e => `<option value="${e}">${e}</option>`).join('') + `</optgroup>`;
+        }
+        if (names.length) {
+          html += `<optgroup label="Legacy names">` + names.map(n => `<option value="${n}">${n}</option>`).join('') + `</optgroup>`;
+        }
+        qActors.innerHTML = html || '<option disabled>(no submitters)</option>';
+
+        Array.from(qActors.options).forEach(o => { if (prev.has(o.value)) o.selected = true; });
       } catch (err) {
         console.error(err);
       }
     }
 
     let lastResults = [];
-
-    btnQuery.addEventListener('click', async (e) => {
+    document.getElementById('btnQuery').addEventListener('click', async (e) => {
       e.preventDefault();
       const actor = document.getElementById('q_email').value.trim(); // auth email
       if (!(actor.includes('@') && actor.includes('.'))) return alert('Login email missing.');
-      const selected = optionsSelected(qEmails);
+      const selected = optionsSelected(qActors);
       const start = document.getElementById('q_start').value;
       const end   = document.getElementById('q_end').value;
       const cbOnly = document.getElementById('q_callbacks_only').checked ? '1' : '0';
       try {
         const url = new URL(WEB_APP_URL);
         url.searchParams.set('api_key', API_KEY);
-        url.searchParams.set('email', actor); // allowlist auth only
-        if (selected.length) url.searchParams.set('emails', selected.join(','));
+        url.searchParams.set('email', actor); // only for allowlist auth
+        if (selected.length) url.searchParams.set('actors', selected.join(','));
         if (start) url.searchParams.set('start', start);
         if (end)   url.searchParams.set('end', end);
         url.searchParams.set('callbacks_only', cbOnly);
@@ -462,7 +448,8 @@
     });
 
     function renderResults(rows) {
-      resultsBody.innerHTML = '';
+      const tbody = document.getElementById('resultsBody');
+      tbody.innerHTML = '';
       for (const r of rows) {
         const tr = document.createElement('tr');
         tr.className = 'border-b';
@@ -479,15 +466,15 @@
           <td class="py-2 pr-4">${escapeHtml(r.sub_account || '')}</td>
           <td class="py-2 pr-4">${escapeHtml(r.source)}</td>
           <td class="py-2 pr-4">${escapeHtml(r.notes)}</td>`;
-        resultsBody.appendChild(tr);
+        tbody.appendChild(tr);
       }
-      resultsCount.textContent = `${rows.length} result(s)`;
+      document.getElementById('resultsCount').textContent = `${rows.length} result(s)`;
     }
 
-    btnExport.addEventListener('click', () => {
+    document.getElementById('btnExport').addEventListener('click', () => {
       if (!lastResults.length) return alert('No results to export.');
       const headers = Object.keys(lastResults[0] || { timestamp:'', submitter_email:'', client_name:'', company_name:'', phone:'', response_type:'', callback_date:'', closer:'', date_of_booking:'', sub_account:'', source:'', notes:'' });
-      const NL = String.fromCharCode(10);
+      const NL = '\n';
       const csv = [headers.join(','), ...lastResults.map(r => headers.map(h => csvEscape(r[h] ?? '')).join(','))].join(NL);
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -499,9 +486,7 @@
 
     function csvEscape(val) {
       const s = String(val).replaceAll('"', '""');
-      const hasNewline = s.indexOf(String.fromCharCode(10)) !== -1;
-      const needsWrap = s.includes(',') || s.includes('"') || hasNewline;
-      return needsWrap ? '"' + s + '"' : s;
+      return /[",\n]/.test(s) ? `"${s}"` : s;
     }
     function escapeHtml(s) {
       return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
@@ -522,7 +507,7 @@
       document.getElementById('q_email').value = '';
       document.getElementById('resultsBody').innerHTML = '';
       document.getElementById('resultsCount').textContent = '—';
-      document.getElementById('q_emails').innerHTML = '';
+      document.getElementById('q_actors').innerHTML = '';
       showToast('Logged out.', 'info');
     });
   </script>
