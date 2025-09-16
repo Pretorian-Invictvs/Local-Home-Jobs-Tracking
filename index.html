@@ -5,9 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Local Home Jobs | Lead Tracking</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    input[type="date"], input[type="tel"], input[type="email"], input[type="text"], input[type="number"] { appearance: none; }
-  </style>
+ <style>
+  input[type="date"], input[type="tel"], input[type="email"], input[type="text"], input[type="number"] { appearance: none; }
+
+/* Caja compacta solo para el selector de submitters */
+  #q_emails {
+    height: 8rem;       /* altura fija */
+    min-height: 0;      /* ignora mínimos anteriores */
+    overflow-y: auto;   /* scroll vertical si hay muchos */
+  }
+</style>
+
 </head>
 <body class="min-h-screen bg-gray-50">
   <main class="max-w-5xl mx-auto p-6">
